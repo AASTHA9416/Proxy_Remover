@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import classroomBg from "../assets/Classroom.jpg";
+import { mockApi } from '../services/mockData';
 
 const TeacherAuth = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showOTP, setShowOTP] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     teacherId: '',
     name: '',
@@ -28,22 +28,16 @@ const TeacherAuth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const endpoint = isLogin ? '/api/auth/teacher/login' : '/api/auth/teacher/register';
-      const response = await axios.post(endpoint, {
-        teacherId: formData.teacherId,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        department: formData.department,
-        designation: formData.designation,
-      });
-      
-      if (response.data.success) {
+      const response = isLogin
+        ? await mockApi.teacherLogin(formData)
+        : await mockApi.teacherRegister(formData);
+
+      if (response.success) {
         setShowOTP(true);
         toast.success('OTP sent successfully! Check your email and phone.');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to process request');
+      toast.error(error.message || 'Failed to process request');
     } finally {
       setLoading(false);
     }
@@ -53,28 +47,25 @@ const TeacherAuth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const endpoint = isLogin ? '/api/auth/teacher/verify-login' : '/api/auth/teacher/verify-register';
-      const response = await axios.post(endpoint, {
-        teacherId: formData.teacherId,
-        email: formData.email,
-        otp: formData.otp,
-      });
+      const response = isLogin
+        ? await mockApi.verifyTeacherLogin(formData)
+        : await mockApi.verifyTeacherRegister(formData);
 
-      if (response.data.success) {
+      if (response.success) {
         localStorage.setItem('userType', 'teacher');
-        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('token', response.token);
         toast.success(isLogin ? 'Login successful!' : 'Registration successful!');
         navigate('/teacher/dashboard');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Verification failed');
+      toast.error(error.message || 'Verification failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
       style={{
         backgroundImage: `url(${classroomBg})`,
@@ -83,7 +74,7 @@ const TeacherAuth = () => {
       }}
     >
       <div className="absolute inset-0 bg-black/50"></div>
-      
+
       <div className="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-md p-8 rounded-xl relative z-10">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
@@ -223,9 +214,8 @@ const TeacherAuth = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                loading ? 'bg-green-400' : 'bg-green-600 hover:bg-green-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500`}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${loading ? 'bg-green-400' : 'bg-green-600 hover:bg-green-700'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500`}
             >
               {loading ? (
                 <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import toast from 'react-hot-toast';
+import { mockApi } from '../services/mockData';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -17,22 +17,25 @@ const StudentDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const [statsResponse, eventsResponse, attendanceResponse] = await Promise.all([
-          axios.get('/api/student/dashboard/stats', {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get('/api/student/events/available', {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get('/api/student/attendance/recent', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
+        // Mock data for stats
+        setStats({
+          totalEvents: 3,
+          attendedEvents: 1,
+          attendanceRate: 33,
+        });
 
-        setStats(statsResponse.data);
-        setAvailableEvents(eventsResponse.data.events);
-        setRecentAttendance(attendanceResponse.data.attendance);
+        // Get events from mock API
+        const events = await mockApi.getEvents();
+        setAvailableEvents(events);
+
+        // Mock recent attendance data
+        setRecentAttendance([
+          {
+            id: '1',
+            eventTitle: 'Data Science Seminar',
+            markedAt: new Date('2024-03-22T14:00:00').toISOString(),
+          }
+        ]);
       } catch (error) {
         toast.error('Failed to load dashboard data');
         if (error.response?.status === 401) {
@@ -48,21 +51,21 @@ const StudentDashboard = () => {
 
   const handleMarkAttendance = async (eventId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`/api/student/events/${eventId}/attend`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await mockApi.markAttendance(eventId);
+      toast.success('Attendance marked successfully!');
 
-      if (response.data.success) {
-        toast.success('Attendance marked successfully!');
-        // Refresh available events
-        const eventsResponse = await axios.get('/api/student/events/available', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setAvailableEvents(eventsResponse.data.events);
-      }
+      // Refresh available events
+      const events = await mockApi.getEvents();
+      setAvailableEvents(events);
+
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        attendedEvents: prev.attendedEvents + 1,
+        attendanceRate: Math.round(((prev.attendedEvents + 1) / prev.totalEvents) * 100)
+      }));
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to mark attendance');
+      toast.error(error.message || 'Failed to mark attendance');
     }
   };
 
@@ -136,23 +139,30 @@ const StudentDashboard = () => {
             </div>
           ) : (
             availableEvents.map((event) => (
-              <div key={event.id} className="p-6 hover:bg-gray-50">
+              <div key={event._id} className="p-6 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h4 className="text-lg font-medium text-gray-900">{event.title}</h4>
                     <p className="mt-1 text-sm text-gray-500">
-                      {new Date(event.startTime).toLocaleString()} - {new Date(event.endTime).toLocaleString()}
+                      {new Date(event.date).toLocaleString()}
                     </p>
                     <p className="mt-1 text-sm text-gray-500">
                       Location: {event.location}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleMarkAttendance(event.id)}
-                    className="ml-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Mark Attendance
-                  </button>
+                  {!event.hasMarkedAttendance && (
+                    <button
+                      onClick={() => handleMarkAttendance(event._id)}
+                      className="ml-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Mark Attendance
+                    </button>
+                  )}
+                  {event.hasMarkedAttendance && (
+                    <span className="ml-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                      Present
+                    </span>
+                  )}
                 </div>
               </div>
             ))

@@ -1,5 +1,5 @@
 // App.jsx
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -15,15 +15,15 @@ import TeacherLogin from './pages/TeacherLogin';
 
 function App() {
   return (
-    <Router>
+    <>
       <Toaster position="top-right" />
       <Navbar />
-      {/* <main className="min-h-screen bg-gray-50"> */}
+      <main className="w-screen h-screen p-4 m-0 bg-gray-50">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
-          
+
           {/* Student Routes */}
           <Route path="/student/auth" element={<StudentAuth />} />
           <Route path="/student/login" element={<StudentLogin />} />
@@ -37,8 +37,8 @@ function App() {
           <Route path="/teacher/events/create" element={<CreateEvent />} />
           <Route path="/teacher/events" element={<Events />} />
         </Routes>
-      {/* </main> */}
-    </Router>
+      </main>
+    </>
   );
 }
 

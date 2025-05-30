@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import toast from 'react-hot-toast';
+import { mockApi } from '../services/mockData';
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -17,18 +17,36 @@ const TeacherDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const [statsResponse, eventsResponse] = await Promise.all([
-          axios.get('/api/teacher/dashboard/stats', {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get('/api/teacher/events/current', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
+        // Mock dashboard stats
+        const mockStats = {
+          totalEvents: 15,
+          activeEvents: 3,
+          totalAttendance: 450,
+          averageAttendance: 85,
+        };
 
-        setStats(statsResponse.data);
-        setCurrentEvents(eventsResponse.data.events);
+        // Mock current events
+        const mockCurrentEvents = [
+          {
+            id: '1',
+            title: 'Web Development Workshop',
+            startTime: new Date('2024-03-20T10:00:00').toISOString(),
+            endTime: new Date('2024-03-20T12:00:00').toISOString(),
+            attendeeCount: 25,
+            totalRegistered: 30
+          },
+          {
+            id: '2',
+            title: 'Data Science Seminar',
+            startTime: new Date('2024-03-22T14:00:00').toISOString(),
+            endTime: new Date('2024-03-22T16:00:00').toISOString(),
+            attendeeCount: 40,
+            totalRegistered: 45
+          }
+        ];
+
+        setStats(mockStats);
+        setCurrentEvents(mockCurrentEvents);
       } catch (error) {
         toast.error('Failed to load dashboard data');
         if (error.response?.status === 401) {
@@ -44,22 +62,7 @@ const TeacherDashboard = () => {
 
   const handleExportAttendance = async (eventId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/teacher/events/${eventId}/export`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob'
-      });
-
-      // Create a download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `attendance_${eventId}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
+      // Mock export functionality
       toast.success('Attendance data exported successfully!');
     } catch (error) {
       toast.error('Failed to export attendance data');

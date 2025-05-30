@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import toast from 'react-hot-toast';
+import { mockApi } from '../services/mockData';
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -21,26 +21,22 @@ const CreateEvent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       const dateTime = new Date(`${formData.date}T${formData.time}`);
 
-      const response = await axios.post(
-        '/api/events/create',
-        {
-          ...formData,
-          date: dateTime.toISOString(),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await mockApi.createEvent({
+        title: formData.title,
+        description: formData.description,
+        date: dateTime.toISOString(),
+        location: formData.location,
+        duration: formData.duration
+      });
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success('Event created successfully!');
         navigate('/events');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create event');
+      toast.error('Failed to create event');
     }
   };
 
@@ -48,7 +44,7 @@ const CreateEvent = () => {
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Event</h1>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">

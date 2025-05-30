@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import classroomBg from "../assets/Classroom.jpg";
+import { mockApi } from '../services/mockData';
 
 const StudentAuth = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showOTP, setShowOTP] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     studentId: '',
     name: '',
@@ -28,22 +28,16 @@ const StudentAuth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const endpoint = isLogin ? '/api/auth/student/login' : '/api/auth/student/register';
-      const response = await axios.post(endpoint, {
-        studentId: formData.studentId,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        department: formData.department,
-        semester: formData.semester,
-      });
-      
-      if (response.data.success) {
+      const response = isLogin
+        ? await mockApi.studentLogin(formData)
+        : await mockApi.studentRegister(formData);
+
+      if (response.success) {
         setShowOTP(true);
         toast.success('OTP sent successfully! Check your email and phone.');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to process request');
+      toast.error(error.message || 'Failed to process request');
     } finally {
       setLoading(false);
     }
@@ -53,28 +47,25 @@ const StudentAuth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const endpoint = isLogin ? '/api/auth/student/verify-login' : '/api/auth/student/verify-register';
-      const response = await axios.post(endpoint, {
-        studentId: formData.studentId,
-        email: formData.email,
-        otp: formData.otp,
-      });
+      const response = isLogin
+        ? await mockApi.verifyStudentLogin(formData)
+        : await mockApi.verifyStudentRegister(formData);
 
-      if (response.data.success) {
+      if (response.success) {
         localStorage.setItem('userType', 'student');
-        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('token', response.token);
         toast.success(isLogin ? 'Login successful!' : 'Registration successful!');
         navigate('/student/dashboard');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Verification failed');
+      toast.error(error.message || 'Verification failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
       style={{
         backgroundImage: `url(${classroomBg})`,
@@ -83,7 +74,7 @@ const StudentAuth = () => {
       }}
     >
       <div className="absolute inset-0 bg-black/50"></div>
-      
+
       <div className="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-md p-8 rounded-xl relative z-10">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
@@ -225,9 +216,8 @@ const StudentAuth = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             >
               {loading ? (
                 <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
